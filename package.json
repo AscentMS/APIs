@@ -1,0 +1,22 @@
+{
+  "name": "apis",
+  "version": "1.0.0",
+  "description": "Public repo for the Evergreen Life OpenAPI documents",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AscentMS/APIs.git"
+  },
+  "author": "Eddie Critchlow",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AscentMS/APIs/issues"
+  },
+  "homepage": "https://github.com/AscentMS/APIs#readme"
+}
