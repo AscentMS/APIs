@@ -1,0 +1,167 @@
+openapi: 3.0.1
+info:
+  title: External Interface Engine - sandbox
+  version: 1.0.0
+servers:
+  - url: 'https://api.evergreen-life.co.uk::{port}{basePath}'
+    description: Production API Server
+    variables:
+      basePath:
+        default: /Sandpit
+        enum:
+          - /Sandpit
+          - /Test
+          - /Prod
+      port:
+        default: '443'
+        enum:
+          - '443'
+paths:
+  /notify:
+    post:
+      tags:
+        - Notification
+      summary: Data available to retrieve notification.
+      description: Informs Evergreen Life that data is available to be read from a 3rd party API.
+      requestBody:
+        description: JSON document detailing the 3rd party and URI of the API to be called.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyBodyType'
+        required: true
+      responses:
+        '200':
+          description: Notification succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifyResponseType'
+              example:
+                saved: true
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '500':
+          $ref: '#/components/responses/Default500'
+      security:
+        - api_key: [ ]
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.NotifyLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+components:
+  schemas:
+    NotifyBodyType:
+      required:
+        - supplier
+        - uri
+      type: object
+      properties:
+        supplier:
+          enum:
+            - Medichecks
+          type: string
+        uri:
+          minLength: 1
+          type: string
+    NotifyResponseType:
+      required:
+        - saved
+      type: object
+      properties:
+        saved:
+          type: boolean
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+    ApiGatewayResponseType:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+  responses:
+    Default400:
+      description: API Gateway 400 response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default401:
+      description: API Gateway 401 response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default403:
+      description: User is not authorized to access this resource with an explicit deny
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default500:
+      description: A server side error occurred. See the response payload for more details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotifyResponseType'
+          example:
+            saved: false
+            error:
+              message: Something went wrong.
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: API Key used to access the Isabel V2 API.
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: apiKey
+      x-amazon-apigateway-authorizer:
+        type: token
+        authorizerUri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.AuthTokenLambdaFunction}/invocations'
+        authorizerCredentials: 'arn:aws:iam::678662263362:role/${stageVariables.ExecuteLambdaRole}'
+        identitySource: method.request.header.Authorization
+        identityValidationExpression: ''
+security:
+  - api_key: [ ]
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
+  params-only:
+    validateRequestBody: false
+    validateRequestParameters: true
+x-amazon-apigateway-policy:
+  Version: '2012-10-17'
+  Statement:
+    - Effect: Deny
+      Principal: '*'
+      Action: execute-api:Invoke
+      Resource: 'arn:aws:execute-api:eu-west-2:678662263362:${stageVariables.ApiGatewayId}/*/*/*'
+      Condition:
+        StringNotEquals:
+          aws:sourceVpc: vpc-0f647bf04f7f68e36
+    - Effect: Allow
+      Principal: '*'
+      Action: execute-api:Invoke
+      Resource: 'arn:aws:execute-api:eu-west-2:678662263362:${stageVariables.ApiGatewayId}/*/*/*'
