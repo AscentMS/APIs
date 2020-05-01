@@ -7,9 +7,9 @@ servers:
     description: Production API Server
     variables:
       basePath:
-        default: /Sandpit
+        default: /Sandbox
         enum:
-          - /Sandpit
+          - /Sandbox
           - /Test
           - /Prod
       port:
