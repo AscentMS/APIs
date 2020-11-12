@@ -1,0 +1,770 @@
+openapi: 3.0.1
+info:
+  title: Evergreen Life External API
+  version: 1.0.0
+servers:
+  - url: 'https:://api.evergreen-life.co.uk:{port}{basePath}'
+    description: Production API Server
+    variables:
+      basePath:
+        default: /Sandbox
+        enum:
+          - /Sandbox
+          - /Test
+          - /Demo
+          - /Prod
+      port:
+        default: '443'
+        enum:
+          - '443'
+paths:
+  /appointment:
+    get:
+      tags:
+        - Appointment
+      summary: Reads appointment information for a user.
+      description: 'Reads appointment information for a user. Optionally, it will return appointment information after a specified date.'
+      parameters:
+        - name: after
+          in: query
+          description: Date after which appointment information should be returned.
+          schema:
+            type: string
+            format: date
+          example: '2020-11-24'
+        - name: pageSize
+          in: query
+          description: 'Number of records to be returned. If not specified, all records will be returned.'
+          schema:
+            maximum: 1000
+            minimum: 10
+            type: integer
+          example: 25
+        - name: lastId
+          in: query
+          description: The id of the last record previously read when using the PageSize option.
+          schema:
+            type: string
+          example: 5fa2a2dac7dbd20daf007247
+      responses:
+        '200':
+          description: Appointment information read successfully..
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponseListType'
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.AppointmentLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+  /gprefresh:
+    post:
+      tags:
+        - GP Refresh
+      summary: Requests a refresh of the GP data held in the PHR for a user.
+      description: Asychronous request to refresh the GP data held in the PHR for a user. The calling system will be notified once the request has completed.
+      requestBody:
+        description: JSON document detailing the endpoint to be called when the GP refresh operation is complete.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GpRefreshRequestType'
+        required: true
+      responses:
+        '200':
+          description: GP refresh request queued successfully. The returned gprefreshrequestid value will be sent in the notification once the GP refresh request has completed to allow reconciliation of the request and notification on the third party system.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GpRefreshResponseType'
+              example:
+                gprefreshrequestid: 5fa2a2dac7dbd20daf007293
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.GpRefreshLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+  /medication:
+    get:
+      tags:
+        - Medication
+      summary: Reads medication information for a user.
+      description: 'Reads medication information for a user. Optionally, it will return medication information after a specified date.'
+      parameters:
+        - name: after
+          in: query
+          description: Date after which appointment information should be returned.
+          schema:
+            type: string
+            format: date
+          example: '2020-11-24'
+        - name: pageSize
+          in: query
+          description: 'Number of records to be returned. If not specified, all records will be returned.'
+          schema:
+            maximum: 1000
+            minimum: 10
+            type: integer
+          example: 25
+        - name: lastId
+          in: query
+          description: The id of the last record previously read when using the PageSize option.
+          schema:
+            type: string
+          example: 5fa2a2dac7dbd20daf007247
+      responses:
+        '200':
+          description: Medication information read successfully..
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationResponseListType'
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.MedicationLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+  /notify:
+    post:
+      tags:
+        - Notification
+      summary: Notifies EGL that data is available for retrieval
+      description: Informs Evergreen Life that data is available to be read from a 3rd party API.
+      requestBody:
+        description: JSON document detailing the 3rd party and URI of the API to be called.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyBodyType'
+        required: true
+      responses:
+        '200':
+          description: Notification succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifyResponseType'
+              example:
+                saved: true
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.NotifyLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+  /order:
+    post:
+      tags:
+        - Order
+      summary: Creates a new order.
+      description: Creates a new entry in the Orders collection in the PHR database.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequestType'
+        required: true
+      responses:
+        '200':
+          description: Order creation succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponseType'
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.OrderLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+    patch:
+      tags:
+        - Order
+      summary: Updates the status of an existing order.
+      description: Updates the status of an existing entry in the Orders collection in the PHR database.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdateRequestType'
+        required: true
+      responses:
+        '200':
+          description: Order status update succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponseType'
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '415':
+          $ref: '#/components/responses/Default415'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.OrderLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+  /user:
+    get:
+      tags:
+        - User
+      summary: Returns a user's demographcis.
+      description: Returns a user's demographics record to a 3rd party supplier using the user information in the JWT used to call the endpoint to determine the user whose demographics are returned.
+      responses:
+        '200':
+          description: Notification succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDemographicsResponseType'
+        '400':
+          $ref: '#/components/responses/Default400'
+        '401':
+          $ref: '#/components/responses/Default401'
+        '403':
+          $ref: '#/components/responses/Default403'
+        '404':
+          $ref: '#/components/responses/Default404'
+        '429':
+          $ref: '#/components/responses/Default429'
+        '500':
+          $ref: '#/components/responses/Default500'
+        default:
+          $ref: '#/components/responses/Default'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.UserDemographicsLambdaFunctionName}/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehaviour: when_no_match
+        httpMethod: POST
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
+components:
+  schemas:
+    AddressType:
+      type: object
+      properties:
+        Street:
+          type: string
+        Town:
+          type: string
+        County:
+          type: string
+        Country:
+          type: string
+        PostCode:
+          type: string
+      additionalProperties: false
+    ApiGatewayResponseType:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          maxLength: 512
+          minLength: 1
+          pattern: '/^{1,512}$/i'
+          type: string
+      additionalProperties: false
+    AppointmentResponseListType:
+      type: array
+      items:
+        required:
+          - id
+          - datestart
+          - clinicianname
+          - lastmodifieddate
+        type: object
+        properties:
+          id:
+            type: string
+          datestart:
+            type: string
+            format: datetime
+          clinicianname:
+            type: string
+          appointmenttype:
+            type: string
+          session:
+            type: string
+          location:
+            type: string
+          reason:
+            type: string
+          lastmodifieddate:
+            type: string
+            format: datetime
+        additionalProperties: false
+        example:
+          id: 5fa2a2dac7dbd20daf007247
+          datestart: '2020-10-28T13:30:00'
+          clinicianname: Dr Foster
+          appointmenttype: Practice
+          location: Testtown Medical Centre
+          reason: Rash
+          lastmodifieddate: '2020-10-25T08:00:00'
+    CodedEntryListType:
+      type: array
+      items:
+        type: object
+        properties:
+          code:
+            type: string
+          system:
+            type: string
+        additionalProperties: false
+    GpRefreshRequestType:
+      required:
+        - supplier
+        - notificationUri
+      type: object
+      properties:
+        completionUri:
+          maxLength: 512
+          minLength: 15
+          pattern: '/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i'
+          type: string
+      additionalProperties: false
+      example:
+        completionUri: https://evergreenpartnername.com/notification
+    GpRefreshResponseType:
+      required:
+        - saved
+      type: object
+      properties:
+        gprefreshrequestid:
+          type: string
+      additionalProperties: false
+    MedicationResponseListType:
+      type: array
+      items:
+        required:
+          - id
+          - frequency
+          - dose
+          - drugname
+          - display
+          - lastmodifieddate
+        type: object
+        properties:
+          id:
+            type: string
+          frequency:
+            required:
+              - display
+            type: object
+            properties:
+              display:
+                type: string
+          dose:
+            type: string
+          drugname:
+            required:
+              - display
+            type: object
+            properties:
+              display:
+                type: string
+              coding:
+                $ref: '#/components/schemas/CodedEntryListType'
+          display:
+            type: string
+          prescribedby:
+            type: string
+          condition:
+            required:
+              - display
+            type: object
+            properties:
+              display:
+                type: string
+              coding:
+                $ref: '#/components/schemas/CodedEntryListType'
+          datestart:
+            type: string
+            format: date
+          until:
+            type: string
+            format: date
+          notes:
+            type: string
+          source:
+            enum:
+              - GP
+              - User
+            type: string
+          lastmodifieddate:
+            type: string
+            format: datetime
+        additionalProperties: false
+        example:
+          id: 5fa2a2dac7dbd20daf007248
+          frequency:
+            display: ''
+          dose: One to be taken each day with food
+          drugname:
+            display: Metformin 500mg modified-release tablets
+            coding:
+              - code: '386047000'
+                system: dm+d
+          display: Metformin 500mg modified-release tablets
+          prescribedby: Dr Doolittle
+          condition:
+            display: Diabetes mellitus type 2
+            coding:
+              - code: '44054006'
+                system: snomed
+          datestart: '2020-10-25T00:00:00'
+          until: ''
+          notes: Test data - not clinically coded.
+          source: GP
+          lastmodifieddate: '2020-10-24T13:23:00'
+    NotifyBodyType:
+      required:
+        - supplier
+        - uri
+      type: object
+      properties:
+        supplier:
+          enum:
+            - Medichecks
+          type: string
+        uri:
+          maxLength: 512
+          minLength: 15
+          pattern: '/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i'
+          type: string
+      additionalProperties: false
+      example:
+        supplier: Medichecks
+        uri: https://fhir.privatebloodtesting.com/4_0_0/DiagnosticReport/257194
+    NotifyResponseType:
+      required:
+        - saved
+      type: object
+      properties:
+        saved:
+          type: boolean
+        error:
+          required:
+            - message
+          type: object
+          properties:
+            message:
+              maxLength: 512
+              minLength: 1
+              pattern: '/^{1,512}$/i'
+              type: string
+          additionalProperties: false
+      additionalProperties: false
+    OrderCreateRequestType:
+      required:
+        - orderNumber
+        - type
+      type: object
+      properties:
+        orderNumber:
+          maxLength: 64
+          minLength: 4
+          pattern: '^[A-za-z0-9]{4,64}$'
+          type: string
+        type:
+          enum:
+            - blood
+            - genomicsTestKit
+            - prescription_gp
+          type: string
+        dateStart:
+          maxLength: 23
+          pattern: '^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(.[0-9]+)?(Z)?$'
+          type: string
+          format: datetime
+      additionalProperties: false
+    OrderResponseType:
+      required:
+        - evergreenOrderId
+      type: object
+      properties:
+        evergreenOrderId:
+          maxLength: 24
+          minLength: 1
+          pattern: '^[a-f\d]{24}$'
+          type: string
+      additionalProperties: false
+    OrderStatusUpdateRequestType:
+      required:
+        - orderNumber
+        - status
+      type: object
+      properties:
+        orderNumber:
+          maxLength: 64
+          minLength: 4
+          pattern: '^[A-za-z0-9]{4,64}$'
+          type: string
+        status:
+          enum:
+            - PENDING
+            - COMPLETED
+          type: string
+        evergreenResultId:
+          maxLength: 24
+          pattern: '^[a-f\d]{24}$'
+          type: string
+      additionalProperties: false
+    UserDemographicsResponseType:
+      required:
+        - Email
+        - DisplayName
+      type: object
+      properties:
+        Email:
+          type: string
+        DisplayName:
+          type: string
+        Forename:
+          type: string
+        Surname:
+          type: string
+        MiddleName:
+          type: string
+        DateOfBirth:
+          type: string
+          format: date
+        Sex:
+          enum:
+            - M
+            - F
+            - U
+          type: string
+        Address:
+          $ref: '#/components/schemas/AddressType'
+      additionalProperties: false
+  responses:
+    Default400:
+      description: API Gateway 400 response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default401:
+      description: API Gateway 401 response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default403:
+      description: User is not authorized to access this resource with an explicit deny
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default404:
+      description: User not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default415:
+      description: Unsupported Media Type
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default429:
+      description: API Gateway 429 response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiGatewayResponseType'
+    Default500:
+      description: A server side error occurred. See the response payload for more details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotifyResponseType'
+          example:
+            saved: false
+            error:
+              message: Something went wrong.
+    Default:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotifyResponseType'
+          example:
+            saved: false
+            error:
+              message: Something went wrong.
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: API Key used to access the Isabel V2 API.
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: x-api-key
+      in: header
+    egl:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: apiKey
+      x-amazon-apigateway-authorizer:
+        type: token
+        authorizerUri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.AuthTokenLambdaFunction}/invocations'
+        authorizerCredentials: 'arn:aws:iam::678662263362:role/${stageVariables.ExecuteLambdaRole}'
+        identitySource: method.request.header.Authorization
+        identityValidationExpression: ''
+security:
+  - api_key: [ ]
+  - egl: [ ]
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
+  params-only:
+    validateRequestBody: false
+    validateRequestParameters: true
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - '''*'''
+  allowCredentials: true
+  exposeHeaders:
+    - x-api-gateway-header
+    - x-amz-date
+    - content-type
+  maxAge: 3600
+  allowMethods:
+    - POST
+    - GET
+    - PATCH
+    - OPTIONS
+  allowHeaders:
+    - x-apigateway-header
+    - x-amz-date
+    - x-amz-security-token
+    - x-api-key
+    - Authorization
+    - content-type
+    - X-Shopify-Topic
+    - X-Shopify-Hmac-SHA256
+    - X-Shopify-Shop-Domain
+    - X-Shopify-API-Version
+x-amazon-apigateway-api-key-source: HEADER
