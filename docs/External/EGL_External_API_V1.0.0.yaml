@@ -34,18 +34,19 @@ paths:
           example: '2020-11-24'
         - name: pageSize
           in: query
-          description: 'Number of records to be returned. If not specified, all records will be returned.'
+          description: 'Number of records to be returned. If not specified or the value equals zero, all records will be returned.'
           schema:
             maximum: 1000
-            minimum: 10
+            minimum: 0
             type: integer
           example: 25
-        - name: lastId
+        - name: pageNumber
           in: query
-          description: The id of the last record previously read when using the PageSize option.
+          description: The number of the page that should be returned when reading data using the PageSize option. Set to 1 to read the first page. Set to zero if all records are to be returned.
           schema:
-            type: string
-          example: 5fa2a2dac7dbd20daf007247
+            minimum: 0
+            type: integer
+          example: 1
       responses:
         '200':
           description: Appointment information read successfully..
@@ -67,6 +68,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.AppointmentLambdaFunctionName}/invocations'
@@ -113,6 +117,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.GpRefreshLambdaFunctionName}/invocations'
@@ -145,12 +152,13 @@ paths:
             minimum: 10
             type: integer
           example: 25
-        - name: lastId
+        - name: pageNumber
           in: query
-          description: The id of the last record previously read when using the PageSize option.
+          description: The number of the page that should be returned when reading data using the PageSize option. Set to 1 to read the first page. Set to zero if all records are to be returned.
           schema:
-            type: string
-          example: 5fa2a2dac7dbd20daf007247
+            minimum: 0
+            type: integer
+          example: 1
       responses:
         '200':
           description: Medication information read successfully..
@@ -172,6 +180,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.MedicationLambdaFunctionName}/invocations'
@@ -218,6 +229,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.NotifyLambdaFunctionName}/invocations'
@@ -261,6 +275,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.OrderLambdaFunctionName}/invocations'
@@ -303,6 +320,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.OrderLambdaFunctionName}/invocations'
@@ -340,6 +360,9 @@ paths:
           $ref: '#/components/responses/Default500'
         default:
           $ref: '#/components/responses/Default'
+      security:
+        - api_key: [ ]
+          egl: [ ]
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.UserDemographicsLambdaFunctionName}/invocations'
@@ -426,18 +449,23 @@ components:
         additionalProperties: false
     GpRefreshRequestType:
       required:
-        - supplier
-        - notificationUri
+        - completionUri
       type: object
       properties:
         completionUri:
           maxLength: 512
           minLength: 15
-          pattern: '/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i'
+          pattern: '^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*(:[0-9]{1,5})?(\/.*)?$'
+          type: string
+        responseAccessCode:
+          maxLength: 256
+          minLength: 15
           type: string
       additionalProperties: false
       example:
         completionUri: https://evergreenpartnername.com/notification
+        oauthUri: https://evergreenpartnername.com/oauth/token
+        responseAccessCode: a68e1a26b64d2144fb6bdd847913a0eb0226777543e30407cf59566e79df77753d7fde99e380f4cfa8d7e1ef40febe5ec9d19b6d1132eef053afb01274794e2e3b9e4818057b6a83f7a9eb250c9b911b0e1261922915c0b7d83217818be486b0530548c7149cd9596bf971a447c3d1995c40461dc6d2319c2b56af0aff8d52e0
     GpRefreshResponseType:
       required:
         - saved
@@ -543,7 +571,7 @@ components:
         uri:
           maxLength: 512
           minLength: 15
-          pattern: '/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i'
+          pattern: '^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*(:[0-9]{1,5})?(\/.*)?$'
           type: string
       additionalProperties: false
       example:
@@ -725,12 +753,12 @@ components:
       type: apiKey
       name: Authorization
       in: header
-      x-amazon-apigateway-authtype: apiKey
+      x-amazon-apigateway-authtype: custom
       x-amazon-apigateway-authorizer:
-        type: token
+        type: request
         authorizerUri: 'arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:678662263362:function:${stageVariables.AuthTokenLambdaFunction}/invocations'
         authorizerCredentials: 'arn:aws:iam::678662263362:role/${stageVariables.ExecuteLambdaRole}'
-        identitySource: method.request.header.Authorization
+        identitySource: 'method.request.header.Authorization, method.request.header.x-api-key'
         identityValidationExpression: ''
 security:
   - api_key: [ ]
