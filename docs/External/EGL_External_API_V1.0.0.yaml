@@ -146,10 +146,10 @@ paths:
           example: '2020-11-24'
         - name: pageSize
           in: query
-          description: 'Number of records to be returned. If not specified, all records will be returned.'
+          description: 'Number of records to be returned. If not specified or the value is zero, all records will be returned.'
           schema:
             maximum: 1000
-            minimum: 10
+            minimum: 0
             type: integer
           example: 25
         - name: pageNumber
